@@ -1,26 +1,17 @@
 import { Project, ProjectStatus } from "../models/project.js";
-
-//Project State Managment Class
-
-type Listener<T> = (items: T[]) => void;
-
-class State<T> {
-    protected listeners: Listener<T>[] = [];
-
-    addListener(listenerFn: Listener<T>) {
+class State {
+    constructor() {
+        this.listeners = [];
+    }
+    addListener(listenerFn) {
         this.listeners.push(listenerFn);
     }
 }
-
-export class ProjectState extends State<Project> {
-
-    private projects: Project[] = [];
-    private static instance: ProjectState;
-
-    private constructor() {
+export class ProjectState extends State {
+    constructor() {
         super();
+        this.projects = [];
     }
-
     static getInstance() {
         if (this.instance) {
             return this.instance;
@@ -28,29 +19,24 @@ export class ProjectState extends State<Project> {
         this.instance = new ProjectState();
         return this.instance;
     }
-
-    addProject(title: string, description: string, numbOfPeople: number) {
+    addProject(title, description, numbOfPeople) {
         const newProject = new Project(Math.random.toString(), title, description, numbOfPeople, ProjectStatus.Active);
         this.projects.push(newProject);
         for (const listenerFn of this.listeners) {
             listenerFn(this.projects.slice());
         }
     }
-
-    moveProject(projectId: string, newStatus: ProjectStatus) {
+    moveProject(projectId, newStatus) {
         const project = this.projects.find(prj => prj.id === projectId);
-
         if (project && project.status !== newStatus) {
             project.status = newStatus;
             this.updateListeners();
         }
     }
-
-    private updateListeners() {
+    updateListeners() {
         for (const listenerFn of this.listeners) {
             listenerFn(this.projects.slice());
         }
     }
 }
-
 export const projectState = ProjectState.getInstance();
